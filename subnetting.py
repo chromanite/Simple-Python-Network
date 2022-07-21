@@ -1,5 +1,4 @@
 import argparse
-from ipaddress import ip_address
 import struct
 import socket
 
