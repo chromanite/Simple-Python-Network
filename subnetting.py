@@ -1,4 +1,5 @@
 import argparse
+from ipaddress import ip_address
 import struct
 import socket
 
@@ -8,6 +9,9 @@ def CIDR_to_subnet(CIDR) -> list:
     return list(int(sub) for sub in subnet.split("."))
 
 def class_parser(class_type, octets, CIDR) -> None:
+    network_list = list()
+    usable_range = list()
+
     if class_type == 'A':
         network = 7
         host = 24
@@ -29,8 +33,6 @@ def class_parser(class_type, octets, CIDR) -> None:
         CIDR_class = 'C'
 
     dec_cidr = CIDR_to_subnet(CIDR)
-    network_list = list()
-    usable_range = list()
 
     for i in range(4):
         network_list.append(bin(octets[i] & dec_cidr[i])[2:].zfill(8))
@@ -55,13 +57,15 @@ def class_parser(class_type, octets, CIDR) -> None:
     print(f"Number of address available for networks: {2**network}")
     print(f"Number of address available for hosts: {2**host}")
     print(f"Number of available addresses: {available_address}")
-    
-    print(f"\nNetwork Address: {network_list[0]}.{network_list[1]}.{network_list[2]}.{network_list[3]}/{CIDR}")
+    ip_addr = str(f"{network_list[0]}.{network_list[1]}.{network_list[2]}.{network_list[3]}")
+
+    print(f"\nNetwork Address: {ip_addr}/{CIDR}")
     
     if CIDR_class == 'A':
         for i in range(2**(32 - CIDR)):
             usable_range.append(network_list[0] + "." + network_list[1] + "." + network_list[2] + "." + str(i))
     elif CIDR_class == 'B':
+
         for i in range (2**(32 - CIDR)):
             usable_range.append(f"{network_list[0]}.{network_list[1]}.{network_list[2]}.{network_list[3]}")
             network_list[3] += 1
@@ -89,16 +93,16 @@ def class_parser(class_type, octets, CIDR) -> None:
                         network_list[0] += 1
 
     usable_range.pop(0)
-    usable_range.pop()
+    broadcast_addr = usable_range.pop()
     
-    with open('usable_range.txt', 'w') as f:
+    with open(f'usable_range {ip_addr}.txt', 'w') as f:
         for i in usable_range:
             f.write(i + '\n')
 
     print(f"Usable Host IP Range: {usable_range[0]} - {usable_range[-1]}")
+    print(f"Broadcast Address: {broadcast_addr}")
     print(f"Total number of hosts: {2**(32 - CIDR)}")
     print(f"Number of usable hosts: {2**(32 - CIDR) - 2}\n")
-
     print(f"Subnet Mask: {dec_cidr[0]}.{dec_cidr[1]}.{dec_cidr[2]}.{dec_cidr[3]}")
     print(f"Wildcard Mask: {255 - dec_cidr[0]}.{255 - dec_cidr[1]}.{255 - dec_cidr[2]}.{255 - dec_cidr[3]}")
 
